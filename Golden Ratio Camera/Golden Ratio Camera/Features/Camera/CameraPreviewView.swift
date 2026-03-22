@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 struct CameraPreviewView: UIViewRepresentable {
     let session: AVCaptureSession
@@ -8,29 +9,40 @@ struct CameraPreviewView: UIViewRepresentable {
         let view = PreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
+        
+        context.coordinator.setupRotationCoordinator(for: view.videoPreviewLayer)
+        
         return view
     }
     
     func updateUIView(_ uiView: PreviewView, context: Context) {
-        if let connection = uiView.videoPreviewLayer.connection {
-            let rotationAngle = currentRotationAngle()
-            if connection.isVideoRotationAngleSupported(rotationAngle) {
-                connection.videoRotationAngle = rotationAngle
-            }
-        }
+        // Rotation is handled via the coordinator now
     }
     
-    private func currentRotationAngle() -> CGFloat {
-        let scenes = UIApplication.shared.connectedScenes
-        let windowScene = scenes.first as? UIWindowScene
-        let orientation = windowScene?.interfaceOrientation ?? .portrait
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    class Coordinator: NSObject {
+        private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+        private var rotationObservation: AnyCancellable?
         
-        switch orientation {
-        case .portrait: return 0
-        case .landscapeLeft: return 90
-        case .portraitUpsideDown: return 180
-        case .landscapeRight: return 270
-        default: return 0
+        @MainActor
+        func setupRotationCoordinator(for layer: AVCaptureVideoPreviewLayer) {
+            guard let device = layer.session?.inputs.compactMap({ ($0 as? AVCaptureDeviceInput)?.device }).first else { return }
+            
+            let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: layer)
+            self.rotationCoordinator = coordinator
+            
+            // Initial angle
+            layer.connection?.videoRotationAngle = coordinator.videoRotationAngleForHorizonLevelPreview
+            
+            // Observe changes
+            rotationObservation = coordinator.publisher(for: \.videoRotationAngleForHorizonLevelPreview)
+                .receive(on: RunLoop.main)
+                .sink { [weak layer] angle in
+                    layer?.connection?.videoRotationAngle = angle
+                }
         }
     }
     

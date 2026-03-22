@@ -1,89 +1,83 @@
 import SwiftUI
+import AVFoundation
 
 struct CameraControlsView: View {
     @EnvironmentObject var viewModel: CameraViewModel
     
     var body: some View {
-        VStack {
-            // Top Bar
+        // Bottom Bar wrapped in a non-safe-area ignoring view
+        VStack(spacing: 15) {
+            // Primary Shutter and Bottom Controls
             HStack {
-                Button(action: { viewModel.showSettings = true }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
-                
-                Spacer()
-                
-                Button(action: { viewModel.toggleOverlayVisibility() }) {
-                    Image(systemName: viewModel.isOverlayVisible ? "eye.fill" : "eye.slash.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
-            }
-            .padding(.top, 50)
-            .padding(.horizontal)
-            
-            Spacer()
-            
-            // Bottom Bar
-            VStack(spacing: 20) {
-                // Secondary Controls
-                HStack(spacing: 30) {
-                    Button(action: { viewModel.nextOverlayMode() }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "circle.grid.3x3.fill")
-                            Text("Mode")
-                                .font(.caption2)
+                    // Gallery
+                    Button(action: {
+                        if let url = URL(string: "photos-redirect://") {
+                            UIApplication.shared.open(url)
                         }
-                        .foregroundColor(.white)
+                    }) {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black)
                     }
                     
-                    if viewModel.overlayMode == .goldenSpiral {
-                        Button(action: { viewModel.rotateSpiral() }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "arrow.counterclockwise.circle.fill")
-                                Text("Rotate")
-                                    .font(.caption2)
-                            }
-                            .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                
-                // Primary Shutter
-                HStack {
                     Spacer()
                     
+                    // Mode
+                    Button(action: { viewModel.nextOverlayMode() }) {
+                        Image(systemName: "circle.grid.3x3.fill")
+                            .font(.title2)
+                            .foregroundColor(viewModel.overlayMode == .goldenSpiral ? .yellow : .white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black)
+                    }
+                    
+                    Spacer()
+                    
+                    // Shutter
                     Button(action: { viewModel.capturePhoto() }) {
                         ZStack {
                             Circle()
                                 .fill(.white)
-                                .frame(width: 70, height: 70)
+                                .frame(width: 65, height: 65)
                             
                             Circle()
                                 .stroke(.white, lineWidth: 3)
-                                .frame(width: 80, height: 80)
+                                .frame(width: 75, height: 75)
                         }
                     }
                     .disabled(viewModel.isCapturing)
                     .opacity(viewModel.isCapturing ? 0.5 : 1.0)
+                    .frame(width: 75, height: 75)
                     
                     Spacer()
+                    
+                    // Rotate
+                    Button(action: { viewModel.rotateSpiral() }) {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .font(.title2)
+                            .foregroundColor(viewModel.isRotatedVertical ? .yellow : .white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black)
+                    }
+                    .opacity(viewModel.overlayMode == .goldenSpiral ? 1 : 0.3)
+                    
+                    Spacer()
+                    
+                    // Reflect
+                    Button(action: { viewModel.toggleReflection() }) {
+                        Image(systemName: "flip.horizontal.fill")
+                            .font(.title2)
+                            .foregroundColor(viewModel.isReflected ? .yellow : .white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.black)
+                    }
+                    .opacity(viewModel.overlayMode == .goldenSpiral ? 1 : 0.3)
                 }
-                .padding(.bottom, 40)
-            }
+                .padding(.horizontal, 15)
+                .padding(.bottom, 30) // Extra padding for home indicator
         }
-        .ignoresSafeArea(.all, edges: .top)
+        .background(Color.black)
     }
 }

@@ -6,24 +6,39 @@ enum GoldenRatioMath {
     static let invPhi: CGFloat = 1.0 / phi          // ~0.618
     static let invPhiSquared: CGFloat = 1.0 / (phi * phi) // ~0.382
     
-    /// Fits a golden rectangle (width/height = phi or height/width = phi) inside a container rect.
-    static func inscribedGoldenRectangle(in container: CGRect) -> CGRect {
+    /// Fits a golden rectangle inside a container rect based on the desired orientation.
+    static func inscribedGoldenRectangle(in container: CGRect, orientation: SpiralOrientation) -> CGRect {
         guard container.width > 0, container.height > 0 else { return .zero }
         
-        // Target aspect ratio is phi (approx 1.618)
-        let containerAspect = container.width / container.height
+        let isLandscape: Bool
+        switch orientation {
+        case .topLeft, .topRight:
+            isLandscape = true
+        case .bottomRight, .bottomLeft:
+            isLandscape = false
+        }
         
         var goldenWidth: CGFloat
         var goldenHeight: CGFloat
         
-        if containerAspect >= phi {
-            // Container is wider than a golden rectangle (height-limited)
-            goldenHeight = container.height
-            goldenWidth = container.height * phi
-        } else {
-            // Container is taller than a golden rectangle (width-limited)
-            goldenHeight = container.width / phi
+        if isLandscape {
+            // Force horizontal golden rectangle
             goldenWidth = container.width
+            goldenHeight = container.width / phi
+            // If too tall for container
+            if goldenHeight > container.height {
+                goldenHeight = container.height
+                goldenWidth = container.height * phi
+            }
+        } else {
+            // Force vertical golden rectangle
+            goldenHeight = container.height
+            goldenWidth = container.height / phi
+            // If too wide for container
+            if goldenWidth > container.width {
+                goldenWidth = container.width
+                goldenHeight = container.width * phi
+            }
         }
         
         let x = container.minX + (container.width - goldenWidth) / 2.0

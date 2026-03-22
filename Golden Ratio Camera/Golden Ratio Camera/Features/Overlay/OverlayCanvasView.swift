@@ -2,7 +2,8 @@ import SwiftUI
 
 struct OverlayCanvasView: View {
     let mode: OverlayMode
-    let orientation: SpiralOrientation
+    let isRotatedVertical: Bool
+    let isReflected: Bool
     let style: OverlayStyle
     
     var body: some View {
@@ -13,7 +14,7 @@ struct OverlayCanvasView: View {
             
             switch mode {
             case .goldenSpiral:
-                path = GoldenSpiralPathBuilder().makePath(in: rect, orientation: orientation)
+                path = GoldenSpiralPathBuilder().makePath(in: rect)
             case .phiGrid:
                 path = PhiGridPathBuilder().makePath(in: rect)
             case .thirdsGrid:
@@ -28,5 +29,6 @@ struct OverlayCanvasView: View {
                 lineWidth: style.lineWidth
             )
         }
+        .scaleEffect(x: isReflected ? -1 : 1, y: isRotatedVertical ? -1 : 1)
     }
 }

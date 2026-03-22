@@ -24,8 +24,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		137115E02F6EA368008B9081 /* Golden Ratio Camera */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Golden Ratio Camera";
 			sourceTree = "<group>";
 		};

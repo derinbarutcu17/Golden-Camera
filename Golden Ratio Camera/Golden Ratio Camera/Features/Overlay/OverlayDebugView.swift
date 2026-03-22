@@ -8,13 +8,11 @@ struct OverlayDebugView: View {
             Text("Debug Info")
                 .font(.headline)
             Text("Mode: \(viewModel.overlayMode.localizedName)")
-            Text("Orientation: \(viewModel.spiralOrientation.rawValue)")
+            Text("Is Rotated: \(String(describing: viewModel.isRotatedVertical))")
             Text("Opacity: \(String(format: "%.2f", viewModel.overlayStyle.opacity))")
             
             if viewModel.overlayMode == .goldenSpiral {
-                let rect = GoldenRatioMath.inscribedGoldenRectangle(in: UIScreen.main.bounds)
-                Text("Golden Rect: \(Int(rect.width))x\(Int(rect.height))")
-                Text("Aspect: \(String(format: "%.3f", rect.width / rect.height))")
+                Text("Golden Rect: Stretched FullBounds")
             }
         }
         .padding()

@@ -6,15 +6,17 @@ import AVFoundation
 @MainActor
 class CameraViewModel: NSObject, ObservableObject {
     @Published var overlayMode: OverlayMode = .goldenSpiral
-    @Published var spiralOrientation: SpiralOrientation = .topLeftCW
+    @Published var isRotatedVertical: Bool = false
     @Published var overlayStyle: OverlayStyle = .defaultStyle
     @Published var isOverlayVisible: Bool = true
+    @Published var isReflected: Bool = false
     @Published var isCapturing: Bool = false
     @Published var showSettings: Bool = false
     @Published var showToast: Bool = false
     @Published var toastMessage: String = ""
     @Published var saveWithOverlay: Bool = false
     @Published var showDebugInfo: Bool = false
+    @Published var currentZoom: CGFloat = 1.0
     
     private let cameraService: CameraService
     private let photoLibraryService: PhotoLibraryService
@@ -44,10 +46,16 @@ class CameraViewModel: NSObject, ObservableObject {
     }
     
     func rotateSpiral() {
-        let orientations = SpiralOrientation.allCases
-        if let index = orientations.firstIndex(of: spiralOrientation) {
-            spiralOrientation = orientations[(index + 1) % orientations.count]
-        }
+        isRotatedVertical.toggle()
+    }
+    
+    func toggleReflection() {
+        isReflected.toggle()
+    }
+    
+    func setZoom(_ level: CGFloat) {
+        currentZoom = level
+        cameraService.setZoom(level)
     }
     
     func capturePhoto() {
@@ -76,18 +84,28 @@ extension CameraViewModel: AVCapturePhotoCaptureDelegate {
             return
         }
         
-        photoLibraryService.saveImage(image)
+        let renderer = OverlayImageRenderer()
+        let processedImage: UIImage
         
         if saveWithOverlay {
-            let renderer = OverlayImageRenderer()
-            let highResWithOverlay = renderer.renderOverlay(
+            processedImage = renderer.renderOverlay(
                 on: image,
                 mode: overlayMode,
-                orientation: spiralOrientation,
+                isRotatedVertical: isRotatedVertical,
+                isReflected: isReflected,
                 style: overlayStyle
             )
-            photoLibraryService.saveImage(highResWithOverlay)
+        } else {
+            processedImage = renderer.renderOverlay(
+                on: image,
+                mode: .none,
+                isRotatedVertical: isRotatedVertical,
+                isReflected: isReflected,
+                style: overlayStyle
+            )
         }
+        
+        photoLibraryService.saveImage(processedImage)
         
         // Success feedback
         toastMessage = "Saved to Photos"
