@@ -84,28 +84,19 @@ extension CameraViewModel: AVCapturePhotoCaptureDelegate {
             return
         }
         
-        let renderer = OverlayImageRenderer()
-        let processedImage: UIImage
-        
         if saveWithOverlay {
-            processedImage = renderer.renderOverlay(
+            let renderer = OverlayImageRenderer()
+            let processedImage = renderer.renderOverlay(
                 on: image,
                 mode: overlayMode,
                 isRotatedVertical: isRotatedVertical,
                 isReflected: isReflected,
                 style: overlayStyle
             )
+            photoLibraryService.saveImage(processedImage)
         } else {
-            processedImage = renderer.renderOverlay(
-                on: image,
-                mode: .none,
-                isRotatedVertical: isRotatedVertical,
-                isReflected: isReflected,
-                style: overlayStyle
-            )
+            photoLibraryService.saveImage(image)
         }
-        
-        photoLibraryService.saveImage(processedImage)
         
         // Success feedback
         toastMessage = "Saved to Photos"

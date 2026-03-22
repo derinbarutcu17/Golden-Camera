@@ -9,42 +9,19 @@ struct OverlayImageRenderer {
         isReflected: Bool,
         style: OverlayStyle
     ) -> UIImage {
-        let isPortrait = image.size.height > image.size.width
-        let phi = GoldenRatioMath.phi
+        guard mode != .none else { return image }
         
-        let targetWidth: CGFloat
-        let targetHeight: CGFloat
-        
-        if isPortrait {
-            targetHeight = image.size.height
-            targetWidth = targetHeight / phi
-        } else {
-            targetWidth = image.size.width
-            targetHeight = targetWidth / phi
-        }
-        
-        let cropRect = CGRect(
-            x: (image.size.width - targetWidth) / 2.0,
-            y: (image.size.height - targetHeight) / 2.0,
-            width: targetWidth,
-            height: targetHeight
-        )
-        
-        // Ensure image fits the new golden rect
-        let imageSize = CGSize(width: targetWidth, height: targetHeight)
-        let renderer = UIGraphicsImageRenderer(size: imageSize)
+        let imageSize = image.size
+        let rendererFormat = UIGraphicsImageRendererFormat()
+        rendererFormat.scale = image.scale
+        rendererFormat.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: imageSize, format: rendererFormat)
         
         let outputImage = renderer.image { context in
-            // Draw cropped original image
-            let drawRect = CGRect(
-                x: -cropRect.origin.x,
-                y: -cropRect.origin.y,
-                width: image.size.width,
-                height: image.size.height
-            )
-            image.draw(in: drawRect)
+            // Draw the original image at its native size. Do not crop.
+            image.draw(in: CGRect(origin: .zero, size: imageSize))
             
-            // Draw overlay exactly on the cropped bounds
+            // Draw overlay on the full image bounds.
             let rect = CGRect(origin: .zero, size: imageSize)
             let path: Path
             

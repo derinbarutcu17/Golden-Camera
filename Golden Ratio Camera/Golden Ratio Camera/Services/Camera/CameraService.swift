@@ -97,6 +97,7 @@ class CameraService: NSObject, ObservableObject {
             
             if session.canAddOutput(photoOutput) {
                 session.addOutput(photoOutput)
+                photoOutput.isHighResolutionCaptureEnabled = true
             }
             
             let finalZoomScale = systemZoomScale
@@ -219,6 +220,12 @@ class CameraService: NSObject, ObservableObject {
         }
         
         let settings = AVCapturePhotoSettings()
+        if photoOutput.isHighResolutionCaptureEnabled {
+            settings.isHighResolutionPhotoEnabled = true
+        }
+        if #available(iOS 13.0, *) {
+            settings.photoQualityPrioritization = .quality
+        }
         photoOutput.capturePhoto(with: settings, delegate: delegate)
     }
 }
